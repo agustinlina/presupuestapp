@@ -1,0 +1,8 @@
+{
+  "name": "mi-app-pdf",
+  "version": "1.0.0",
+  "main": "api.js",
+  "dependencies": {
+    "pdfkit": "^0.13.0"
+  }
+}

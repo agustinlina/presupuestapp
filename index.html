@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Generar PDF</title>
+</head>
+<body>
+  <h2>Pega tu texto para descargar como PDF</h2>
+  <form id="pdfForm">
+    <textarea id="texto" name="texto" rows="10" cols="50"></textarea><br>
+    <button type="submit">Descargar PDF</button>
+  </form>
+  <script>
+    document.getElementById('pdfForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const texto = document.getElementById('texto').value;
+      const res = await fetch('/api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texto })
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'archivo.pdf';
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } else {
+        alert('Error generando el PDF');
+      }
+    });
+  </script>
+</body>
+</html>
