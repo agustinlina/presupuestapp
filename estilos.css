@@ -46,8 +46,6 @@ input, select, textarea {
   box-sizing: border-box;
   outline: none;
   transition: border 0.2s;
-  min-width: 80px;
-  max-width: 100%;
 }
 input:focus {
   border-color: var(--accent);
@@ -103,11 +101,10 @@ td:last-child, th:last-child {
 .leyenda {
   font-size: 1.15rem;
   font-weight: bold;
-  margin: 32px 0 40px 0; /* MÁS espacio abajo */
-  text-align: left;       /* IZQUIERDA */
+  margin: 32px 0 22px 0;
+  text-align: center;
   letter-spacing: 0.5px;
 }
-
 .totales {
   margin-top: 14px;
   text-align: right;

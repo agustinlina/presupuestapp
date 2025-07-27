@@ -1,6 +1,4 @@
 const PDFDocument = require('pdfkit');
-const fs = require('fs');
-const path = require('path');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -22,17 +20,6 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename=presupuesto.pdf');
   const doc = new PDFDocument({ size: 'A4', margin: 36 });
 
-  // Marca de agua fondo.svg (si está presente)
-  const fondoPath = path.join(process.cwd(), 'fondo.svg');
-  if (fs.existsSync(fondoPath)) {
-    const svg = fs.readFileSync(fondoPath, 'utf8');
-    doc.save();
-    doc.opacity(0.08);
-    doc.svg(svg, 80, 170, { width: 450 });
-    doc.opacity(1);
-    doc.restore();
-  }
-
   // Datos empresa - arriba izquierda
   doc.fontSize(13).font('Helvetica-Bold').fillColor('#222')
     .text('Reconstructora Unión S.A', 36, 36);
@@ -40,13 +27,6 @@ module.exports = async (req, res) => {
     .text('CUIT: 30716717565', 36, 54)
     .text('Olavarría, Pcia. de Buenos Aires', 36, 68)
     .text('olavarria@reconstructoraunion.com', 36, 82);
-
-  // Logo.svg en el centro superior (si está presente)
-  const logoPath = path.join(process.cwd(), 'logo.svg');
-  if (fs.existsSync(logoPath)) {
-    const svgLogo = fs.readFileSync(logoPath, 'utf8');
-    doc.svg(svgLogo, 240, 36, { width: 120 });
-  }
 
   // Datos cliente - arriba derecha
   const rightX = 360;
@@ -59,16 +39,16 @@ module.exports = async (req, res) => {
     .text('Fecha:', rightX, 96)
     .text(new Date().toLocaleDateString('es-AR'), rightX, 108);
 
-  // Leyenda alineada a izquierda y espacio
+  // Leyenda centrada y grande
   doc.moveDown(2.3);
   doc.font('Helvetica-Bold').fontSize(15).fillColor('#000')
-    .text('Presupuesto por Ud. requerido', 36, 148, { align: 'left', width: 500 });
-  doc.moveDown(2.2);
+    .text('Presupuesto por Ud. requerido', { align: 'center' });
+  doc.moveDown();
 
   // Tabla de productos
   doc.font('Helvetica-Bold').fontSize(11).fillColor('#000');
   const col = [36, 110, 340, 410, 510];
-  const tableTop = 200;
+  const tableTop = 170;
   doc.text('Cant.', col[0], tableTop, { width: col[1]-col[0], align:'center' });
   doc.text('Descripción', col[1], tableTop, { width: col[2]-col[1], align:'center' });
   doc.text('Precio/U', col[2], tableTop, { width: col[3]-col[2], align:'center' });

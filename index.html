@@ -10,13 +10,13 @@
     <h1>Presupuesto Unión S.A</h1>
     <form id="formPresupuesto" autocomplete="off">
       <label>Nombre de la empresa cliente:</label>
-      <input name="nombreCliente" required value="Empresa Ejemplo S.A." style="min-width:220px;max-width:100%;" />
+      <input name="nombreCliente" required>
 
       <label>CUIT cliente:</label>
-      <input name="cuitCliente" required pattern="[0-9\-]{11,13}" value="99-99999999-9" style="min-width:170px;max-width:100%;" />
+      <input name="cuitCliente" required pattern="[0-9\-]{11,13}" placeholder="Solo números o con guiones">
 
       <label>Condiciones de venta:</label>
-      <input name="condiciones" required value="Contado" style="min-width:120px;max-width:100%;" />
+      <input name="condiciones" required placeholder="Ejemplo: Contado, 30 días, etc.">
 
       <div class="leyenda">Presupuesto por Ud. requerido</div>
 
@@ -40,6 +40,7 @@
       <button class="btn" type="submit" style="margin-top:22px; float:right;">Descargar PDF</button>
     </form>
   </div>
+
   <script>
     const tbody = document.querySelector('#tablaProductos tbody');
     const agregarFilaBtn = document.getElementById('agregarFila');
@@ -48,9 +49,9 @@
     function crearFila(datos={}) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><input type="number" name="cantidad" min="1" value="${datos.cantidad !== undefined ? datos.cantidad : 1}" required style="min-width:60px;max-width:80px;"></td>
-        <td><input type="text" name="descripcion" value="${datos.descripcion !== undefined ? datos.descripcion : 'Producto genérico'}" required style="min-width:120px;max-width:180px;"></td>
-        <td><input type="number" name="precio" min="0" step="0.01" value="${datos.precio !== undefined ? datos.precio : 100}" required style="min-width:80px;max-width:100px;"></td>
+        <td><input type="number" name="cantidad" min="1" value="${datos.cantidad||''}" required></td>
+        <td><input type="text" name="descripcion" value="${datos.descripcion||''}" required></td>
+        <td><input type="number" name="precio" min="0" step="0.01" value="${datos.precio||''}" required></td>
         <td class="total-fila">$0.00</td>
         <td><button type="button" class="del-btn" title="Quitar fila">&times;</button></td>
       `;
@@ -64,8 +65,10 @@
       );
       return tr;
     }
+
     crearFila();
     crearFila();
+
     agregarFilaBtn.onclick = () => crearFila();
 
     function calcularTotales() {
@@ -128,3 +131,4 @@
   </script>
 </body>
 </html>
+
