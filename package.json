@@ -1,7 +1,8 @@
 {
-  "name": "mi-app-pdf",
+  "name": "presupuestador-union",
   "version": "1.0.0",
   "dependencies": {
-    "pdfkit": "^0.13.0"
+    "pdfkit": "^0.13.0",
+    "node-fetch": "^2.6.7"
   }
 }

@@ -1,0 +1,117 @@
+:root {
+  --bg: #181818;
+  --fg: #eee;
+  --border: #333;
+  --accent: #fff;
+  --card: #222;
+  --table-head: #1a1a1a;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  padding: 0;
+}
+.container {
+  max-width: 700px;
+  margin: 32px auto;
+  background: var(--card);
+  padding: 2rem 2.5rem 2.5rem 2.5rem;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px #0004;
+}
+h1 {
+  text-align: center;
+  font-size: 2.2rem;
+  letter-spacing: 1px;
+  margin-bottom: 1.5rem;
+}
+label {
+  font-size: 1rem;
+  margin: 10px 0 2px 0;
+  display: block;
+  font-weight: bold;
+}
+input, select, textarea {
+  background: #222;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  width: 100%;
+  font-size: 1rem;
+  box-sizing: border-box;
+  outline: none;
+  transition: border 0.2s;
+}
+input:focus {
+  border-color: var(--accent);
+}
+.table-container {
+  margin-top: 30px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg);
+  color: var(--fg);
+}
+th, td {
+  border: 1px solid var(--border);
+  padding: 9px 7px;
+  font-size: 1rem;
+  text-align: left;
+}
+th {
+  background: var(--table-head);
+  font-weight: bold;
+  text-align: center;
+}
+td:last-child, th:last-child {
+  text-align: center;
+  width: 46px;
+}
+.btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 7px 17px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin: 8px 2px 0 0;
+  transition: background 0.15s, border 0.15s;
+}
+.btn:hover {
+  background: #292929;
+  border-color: var(--accent);
+}
+.del-btn {
+  color: #f55;
+  border: none;
+  background: none;
+  font-size: 1.4em;
+  cursor: pointer;
+}
+.leyenda {
+  font-size: 1.15rem;
+  font-weight: bold;
+  margin: 32px 0 22px 0;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+.totales {
+  margin-top: 14px;
+  text-align: right;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+@media (max-width: 600px) {
+  .container { padding: 1rem; }
+  table, thead, tbody, th, td, tr { font-size: 0.93em; }
+}
