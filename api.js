@@ -1,16 +1,8 @@
 const PDFDocument = require('pdfkit');
-const fetch = require('node-fetch');
 
-const LOGO_URL = 'https://reconstructoraunion.com/wp-content/uploads/2021/11/LogoRU_blanco.png';
-
-async function fetchImageBuffer(url) {
-  try {
-    const res = await fetch(url);
-    return await res.buffer();
-  } catch (e) {
-    return null;
-  }
-}
+// Logo base64 PNG (puedes reemplazar por otro si tienes uno mejor)
+const LOGO_BASE64 = 
+  "iVBORw0KGgoAAAANSUhEUgAAAJYAAABeCAYAAACNcVRgAAAACXBIWXMAAAsTAAALEwEAmpwYAAABxUlEQVR4nO3cwW7CMBQF0J+FkuhL/hWPUjQR0ReR1hR9yyAvIMbVdWyyqfeA0/OzNmlj+v6CgAAAAAAAAAAQDU2+4Wb3r+jsq3f7A5WNrZWtZzVsNkTOOY8lWh1bZ2f8nyrCy4n47Lb4jOzkfFRfjA6wjdxnqUP6w9eS39zOF9r9ut1LL+3aYeJw/dwQbU41sSb15PpjpJWjZLrk3q/WLnj2xmrPrQpYp5fpHfKx/gt57hL2dL2H9A6bq0xzqJ6oehke2A2K5rB9zpSjaD59DaKa4OfYj7Dq8Obf12Ae+wfaYfb4obwb4GdTrwAWkvbAznfrtKOzMLCeKjsCxiT9jiYDY5Gnd94ny9+/nWxF2cX8r2z8cTsZf+mn5mAW+zvWt+O6F1te6noAAAAAAAAAAAj+A/7ANWeCZCyeHkAAAAASUVORK5CYII="
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -38,9 +30,9 @@ module.exports = async (req, res) => {
   doc.text('Olavarría, Pcia. de Buenos Aires', 36, 76);
   doc.text('olavarria@reconstructoraunion.com', 36, 92);
 
-  // Logo
-  const logoBuffer = await fetchImageBuffer(LOGO_URL);
-  if (logoBuffer) doc.image(logoBuffer, 230, 36, { width: 120, height: 60 });
+  // Logo en base64 PNG (entre medio)
+  const logoBuffer = Buffer.from(LOGO_BASE64, 'base64');
+  doc.image(logoBuffer, 230, 36, { width: 120, height: 60 });
 
   // Datos cliente, arriba derecha
   doc.fontSize(12).fillColor('#fff').font('Helvetica-Bold');

@@ -1,136 +1,133 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-    <meta charset="UTF-8">
-    <title>Presupuestador Unión S.A</title>
-    <link rel="stylesheet" href="estilos.css">
+  <meta charset="UTF-8">
+  <title>Presupuestador Unión S.A</title>
+  <link rel="stylesheet" href="estilos.css">
 </head>
-
 <body>
-    <div class="container">
-        <h1>Presupuesto Unión S.A</h1>
-        <form id="formPresupuesto" autocomplete="off">
-            <label>Nombre de la empresa cliente:</label>
-            <input name="nombreCliente" required>
+  <div class="container">
+    <h1>Presupuesto Unión S.A</h1>
+    <form id="formPresupuesto" autocomplete="off">
+      <label>Nombre de la empresa cliente:</label>
+      <input name="nombreCliente" required>
 
-            <label>CUIT cliente:</label>
-            <input name="cuitCliente" required pattern="[0-9\-]{11,13}" placeholder="Solo números o con guiones">
+      <label>CUIT cliente:</label>
+      <input name="cuitCliente" required pattern="[0-9\-]{11,13}" placeholder="Solo números o con guiones">
 
-            <label>Condiciones de venta:</label>
-            <input name="condiciones" required placeholder="Ejemplo: Contado, 30 días, etc.">
+      <label>Condiciones de venta:</label>
+      <input name="condiciones" required placeholder="Ejemplo: Contado, 30 días, etc.">
 
-            <div class="leyenda">Presupuesto por Ud. requerido</div>
+      <div class="leyenda">Presupuesto por Ud. requerido</div>
 
-            <div class="table-container">
-                <table id="tablaProductos">
-                    <thead>
-                        <tr>
-                            <th>Cantidad</th>
-                            <th>Descripción</th>
-                            <th>Precio x unidad</th>
-                            <th>Total</th>
-                            <th>Quitar</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <button type="button" class="btn" id="agregarFila">Agregar producto</button>
-            </div>
+      <div class="table-container">
+        <table id="tablaProductos">
+          <thead>
+            <tr>
+              <th>Cantidad</th>
+              <th>Descripción</th>
+              <th>Precio x unidad</th>
+              <th>Total</th>
+              <th>Quitar</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="btn" id="agregarFila">Agregar producto</button>
+      </div>
 
-            <div class="totales">Total: $<span id="totalGeneral">0.00</span></div>
-            <button class="btn" type="submit" style="margin-top:22px; float:right;">Descargar PDF</button>
-        </form>
-    </div>
+      <div class="totales">Total: $<span id="totalGeneral">0.00</span></div>
+      <button class="btn" type="submit" style="margin-top:22px; float:right;">Descargar PDF</button>
+    </form>
+  </div>
 
-    <script>
-        const tbody = document.querySelector('#tablaProductos tbody');
-        const agregarFilaBtn = document.getElementById('agregarFila');
-        const totalGeneral = document.getElementById('totalGeneral');
+  <script>
+    const tbody = document.querySelector('#tablaProductos tbody');
+    const agregarFilaBtn = document.getElementById('agregarFila');
+    const totalGeneral = document.getElementById('totalGeneral');
 
-        function crearFila(datos = {}) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-        <td><input type="number" name="cantidad" min="1" value="${datos.cantidad || ''}" required></td>
-        <td><input type="text" name="descripcion" value="${datos.descripcion || ''}" required></td>
-        <td><input type="number" name="precio" min="0" step="0.01" value="${datos.precio || ''}" required></td>
+    function crearFila(datos={}) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="number" name="cantidad" min="1" value="${datos.cantidad||''}" required></td>
+        <td><input type="text" name="descripcion" value="${datos.descripcion||''}" required></td>
+        <td><input type="number" name="precio" min="0" step="0.01" value="${datos.precio||''}" required></td>
         <td class="total-fila">$0.00</td>
         <td><button type="button" class="del-btn" title="Quitar fila">&times;</button></td>
       `;
-            tbody.appendChild(tr);
-            tr.querySelector('.del-btn').onclick = () => {
-                tr.remove();
-                calcularTotales();
-            };
-            tr.querySelectorAll('input').forEach(inp =>
-                inp.oninput = calcularTotales
-            );
-            return tr;
-        }
-
-        crearFila();
-        crearFila();
-
-        agregarFilaBtn.onclick = () => crearFila();
-
-        function calcularTotales() {
-            let total = 0;
-            tbody.querySelectorAll('tr').forEach(tr => {
-                const cantidad = parseFloat(tr.querySelector('[name="cantidad"]').value) || 0;
-                const precio = parseFloat(tr.querySelector('[name="precio"]').value) || 0;
-                const subtotal = cantidad * precio;
-                tr.querySelector('.total-fila').textContent = subtotal ? `$${subtotal.toFixed(2)}` : '$0.00';
-                total += subtotal;
-            });
-            totalGeneral.textContent = total.toFixed(2);
-        }
-        tbody.addEventListener('input', calcularTotales);
-
-        document.getElementById('formPresupuesto').onsubmit = async e => {
-            e.preventDefault();
-            const form = e.target;
-            const productos = [];
-            tbody.querySelectorAll('tr').forEach(tr => {
-                const cantidad = tr.querySelector('[name="cantidad"]').value;
-                const descripcion = tr.querySelector('[name="descripcion"]').value;
-                const precio = tr.querySelector('[name="precio"]').value;
-                if (cantidad && descripcion && precio) {
-                    productos.push({
-                        cantidad: parseInt(cantidad),
-                        descripcion,
-                        precio: parseFloat(precio)
-                    });
-                }
-            });
-            if (productos.length < 1) {
-                alert('Agregue al menos un producto');
-                return;
-            }
-            const datos = {
-                nombreCliente: form.nombreCliente.value,
-                cuitCliente: form.cuitCliente.value,
-                condiciones: form.condiciones.value,
-                productos
-            };
-            const res = await fetch('/api', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datos)
-            });
-            if (res.ok) {
-                const blob = await res.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'presupuesto.pdf';
-                a.click();
-                URL.revokeObjectURL(url);
-            } else {
-                alert('Error generando el PDF');
-            }
-        };
+      tbody.appendChild(tr);
+      tr.querySelector('.del-btn').onclick = () => {
+        tr.remove();
         calcularTotales();
-    </script>
-</body>
+      };
+      tr.querySelectorAll('input').forEach(inp =>
+        inp.oninput = calcularTotales
+      );
+      return tr;
+    }
 
+    crearFila();
+    crearFila();
+
+    agregarFilaBtn.onclick = () => crearFila();
+
+    function calcularTotales() {
+      let total = 0;
+      tbody.querySelectorAll('tr').forEach(tr => {
+        const cantidad = parseFloat(tr.querySelector('[name="cantidad"]').value) || 0;
+        const precio = parseFloat(tr.querySelector('[name="precio"]').value) || 0;
+        const subtotal = cantidad * precio;
+        tr.querySelector('.total-fila').textContent = subtotal ? `$${subtotal.toFixed(2)}` : '$0.00';
+        total += subtotal;
+      });
+      totalGeneral.textContent = total.toFixed(2);
+    }
+    tbody.addEventListener('input', calcularTotales);
+
+    document.getElementById('formPresupuesto').onsubmit = async e => {
+      e.preventDefault();
+      const form = e.target;
+      const productos = [];
+      tbody.querySelectorAll('tr').forEach(tr => {
+        const cantidad = tr.querySelector('[name="cantidad"]').value;
+        const descripcion = tr.querySelector('[name="descripcion"]').value;
+        const precio = tr.querySelector('[name="precio"]').value;
+        if (cantidad && descripcion && precio) {
+          productos.push({
+            cantidad: parseInt(cantidad),
+            descripcion,
+            precio: parseFloat(precio)
+          });
+        }
+      });
+      if (productos.length < 1) {
+        alert('Agregue al menos un producto');
+        return;
+      }
+      const datos = {
+        nombreCliente: form.nombreCliente.value,
+        cuitCliente: form.cuitCliente.value,
+        condiciones: form.condiciones.value,
+        productos
+      };
+      const res = await fetch('/api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'presupuesto.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        alert('Error generando el PDF');
+      }
+    };
+    calcularTotales();
+  </script>
+</body>
 </html>
