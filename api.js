@@ -22,21 +22,18 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename=presupuesto.pdf');
   const doc = new PDFDocument({ size: 'A4', margin: 36 });
 
-  // --- Marca de agua (fondo.svg) grande y centrada, si existe ---
+  // --- Marca de agua: fondo.svg, opaca, centrada ---
   try {
     const fondoPath = path.join(process.cwd(), 'fondo.svg');
     if (fs.existsSync(fondoPath)) {
       const svgFondo = fs.readFileSync(fondoPath, 'utf8');
       doc.save();
-      doc.opacity(0.08);
-      // Centrado visual para A4 y grande
+      doc.opacity(0.08); // Solo la imagen, no el resto
       doc.svg(svgFondo, 82, 140, { width: 430, height: 430 });
-      doc.opacity(1);
       doc.restore();
+      doc.opacity(1); // ¡Asegura que TODO el resto del PDF queda normal!
     }
-  } catch (e) {
-    // Si no está o da error, no se agrega fondo
-  }
+  } catch (e) {}
 
   // --- Datos empresa (arriba izquierda) ---
   doc.fontSize(13).font('Helvetica-Bold').fillColor('#222')
@@ -46,17 +43,15 @@ module.exports = async (req, res) => {
     .text('Olavarría, Pcia. de Buenos Aires', 36, 68)
     .text('olavarria@reconstructoraunion.com', 36, 82);
 
-  // --- Logo.svg (entre empresa y cliente), si existe ---
+  // --- Logo.svg entre empresa y cliente, SIN opacidad ---
   try {
     const logoPath = path.join(process.cwd(), 'logo.svg');
     if (fs.existsSync(logoPath)) {
       const svgLogo = fs.readFileSync(logoPath, 'utf8');
-      // Centrado horizontal, Y = 100 (ajusta según tus datos)
-      doc.svg(svgLogo, 210, 100, { width: 150, height: 90 });
+      // Entre bloques: Y=105 (ajusta si lo querés más arriba/abajo)
+      doc.svg(svgLogo, 210, 105, { width: 150, height: 90 });
     }
-  } catch (e) {
-    // Si no está o da error, sigue sin logo
-  }
+  } catch (e) {}
 
   // --- Datos cliente (arriba derecha) ---
   const rightX = 360;
