@@ -1,9 +1,5 @@
 const PDFDocument = require('pdfkit');
 
-// Logo base64 PNG (puedes reemplazar por otro si tienes uno mejor)
-const LOGO_BASE64 = 
-  "iVBORw0KGgoAAAANSUhEUgAAAJYAAABeCAYAAACNcVRgAAAACXBIWXMAAAsTAAALEwEAmpwYAAABxUlEQVR4nO3cwW7CMBQF0J+FkuhL/hWPUjQR0ReR1hR9yyAvIMbVdWyyqfeA0/OzNmlj+v6CgAAAAAAAAAAQDU2+4Wb3r+jsq3f7A5WNrZWtZzVsNkTOOY8lWh1bZ2f8nyrCy4n47Lb4jOzkfFRfjA6wjdxnqUP6w9eS39zOF9r9ut1LL+3aYeJw/dwQbU41sSb15PpjpJWjZLrk3q/WLnj2xmrPrQpYp5fpHfKx/gt57hL2dL2H9A6bq0xzqJ6oehke2A2K5rB9zpSjaD59DaKa4OfYj7Dq8Obf12Ae+wfaYfb4obwb4GdTrwAWkvbAznfrtKOzMLCeKjsCxiT9jiYDY5Gnd94ny9+/nWxF2cX8r2z8cTsZf+mn5mAW+zvWt+O6F1te6noAAAAAAAAAAAj+A/7ANWeCZCyeHkAAAAASUVORK5CYII="
-
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.statusCode = 405;
@@ -15,6 +11,7 @@ module.exports = async (req, res) => {
   let data;
   try { data = JSON.parse(body); }
   catch { res.statusCode = 400; res.end('Datos inválidos'); return; }
+
   const {
     nombreCliente = '', cuitCliente = '', condiciones = '', productos = []
   } = data;
@@ -23,37 +20,35 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename=presupuesto.pdf');
   const doc = new PDFDocument({ size: 'A4', margin: 36 });
 
-  // Encabezado empresa y cliente
-  doc.fontSize(12).fillColor('#fff').font('Helvetica-Bold');
-  doc.text('Reconstructora Unión S.A', 36, 40);
-  doc.fontSize(10).font('Helvetica').text('CUIT: 30716717565', 36, 60);
-  doc.text('Olavarría, Pcia. de Buenos Aires', 36, 76);
-  doc.text('olavarria@reconstructoraunion.com', 36, 92);
+  // Datos empresa - arriba izquierda
+  doc.fontSize(13).font('Helvetica-Bold').fillColor('#222')
+    .text('Reconstructora Unión S.A', 36, 36);
+  doc.fontSize(10).font('Helvetica').fillColor('#333')
+    .text('CUIT: 30716717565', 36, 54)
+    .text('Olavarría, Pcia. de Buenos Aires', 36, 68)
+    .text('olavarria@reconstructoraunion.com', 36, 82);
 
-  // Logo en base64 PNG (entre medio)
-  const logoBuffer = Buffer.from(LOGO_BASE64, 'base64');
-  doc.image(logoBuffer, 230, 36, { width: 120, height: 60 });
+  // Datos cliente - arriba derecha
+  const rightX = 360;
+  doc.fontSize(11).font('Helvetica-Bold').fillColor('#111')
+    .text('Presupuestado para:', rightX, 36);
+  doc.font('Helvetica').fontSize(10).fillColor('#222')
+    .text(nombreCliente, rightX, 54)
+    .text(`CUIT: ${cuitCliente}`, rightX, 68)
+    .text(`Condiciones: ${condiciones}`, rightX, 82)
+    .text('Fecha:', rightX, 96)
+    .text(new Date().toLocaleDateString('es-AR'), rightX, 108);
 
-  // Datos cliente, arriba derecha
-  doc.fontSize(12).fillColor('#fff').font('Helvetica-Bold');
-  doc.text('Cliente:', 410, 40);
-  doc.font('Helvetica').fontSize(10).fillColor('#ddd');
-  doc.text(nombreCliente, 410, 58);
-  doc.text(`CUIT: ${cuitCliente}`, 410, 72);
-  doc.text(`Condiciones: ${condiciones}`, 410, 88);
-  doc.text('Fecha:', 410, 104);
-  doc.text(new Date().toLocaleDateString('es-AR'), 410, 116);
-
-  // Leyenda
-  doc.moveDown(3);
-  doc.font('Helvetica-Bold').fontSize(15).fillColor('#fff');
-  doc.text('Presupuesto por Ud. requerido', { align: 'center' });
+  // Leyenda centrada y grande
+  doc.moveDown(2.3);
+  doc.font('Helvetica-Bold').fontSize(15).fillColor('#000')
+    .text('Presupuesto por Ud. requerido', { align: 'center' });
   doc.moveDown();
 
-  // Tabla productos
-  doc.font('Helvetica-Bold').fontSize(11);
-  const tableTop = 200;
+  // Tabla de productos
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#000');
   const col = [36, 110, 340, 410, 510];
+  const tableTop = 170;
   doc.text('Cant.', col[0], tableTop, { width: col[1]-col[0], align:'center' });
   doc.text('Descripción', col[1], tableTop, { width: col[2]-col[1], align:'center' });
   doc.text('Precio/U', col[2], tableTop, { width: col[3]-col[2], align:'center' });
@@ -61,7 +56,7 @@ module.exports = async (req, res) => {
 
   let y = tableTop + 18;
   let totalGeneral = 0;
-  doc.font('Helvetica').fontSize(10);
+  doc.font('Helvetica').fontSize(10).fillColor('#111');
   productos.forEach(prod => {
     const {cantidad, descripcion, precio} = prod;
     const total = cantidad * precio;
@@ -73,9 +68,9 @@ module.exports = async (req, res) => {
     y += 22;
   });
 
-  // Total
-  doc.moveTo(col[0], y+2).lineTo(col[4], y+2).strokeColor('#fff').stroke();
-  doc.font('Helvetica-Bold').fontSize(12);
+  // Total final
+  doc.moveTo(col[0], y+2).lineTo(col[4], y+2).strokeColor('#000').stroke();
+  doc.font('Helvetica-Bold').fontSize(12).fillColor('#000');
   doc.text('Total:', col[2], y+10, { width: col[3]-col[2], align:'center' });
   doc.text(`$${totalGeneral.toFixed(2)}`, col[3], y+10, { width: col[4]-col[3], align:'center' });
 
