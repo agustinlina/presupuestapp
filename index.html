@@ -10,13 +10,13 @@
     <h1>Presupuesto Unión S.A</h1>
     <form id="formPresupuesto" autocomplete="off">
       <label>Nombre de la empresa cliente:</label>
-      <input name="nombreCliente" required value="Empresa Ejemplo S.A.">
+      <input name="nombreCliente" required value="Empresa Ejemplo S.A." placeholder="Nombre de la empresa">
 
       <label>CUIT cliente:</label>
-      <input name="cuitCliente" required pattern="[0-9\-]{11,13}" value="99-99999999-9">
+      <input name="cuitCliente" required pattern="[0-9\-]{11,13}" value="99-99999999-9" placeholder="99-99999999-9">
 
       <label>Condiciones de venta:</label>
-      <input name="condiciones" required value="Contado">
+      <input name="condiciones" required value="Contado" placeholder="Contado, 30 días, etc.">
 
       <div class="leyenda">Presupuesto por Ud. requerido</div>
 
@@ -48,9 +48,9 @@
     function crearFila(datos={}) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><input type="number" name="cantidad" min="1" value="${datos.cantidad !== undefined ? datos.cantidad : 1}" required placeholder="Cantidad" style="min-width:60px;max-width:80px;"></td>
-        <td><input type="text" name="descripcion" value="${datos.descripcion !== undefined ? datos.descripcion : 'Producto genérico'}" required placeholder="Descripción" style="min-width:120px;max-width:180px;"></td>
-        <td><input type="number" name="precio" min="0" step="0.01" value="${datos.precio !== undefined ? datos.precio : 100}" required placeholder="Precio" style="min-width:80px;max-width:100px;"></td>
+        <td><input type="number" name="cantidad" min="1" value="${datos.cantidad !== undefined ? datos.cantidad : 1}" required placeholder="Cantidad"></td>
+        <td><input type="text" name="descripcion" value="${datos.descripcion !== undefined ? datos.descripcion : 'Producto genérico'}" required placeholder="Descripción"></td>
+        <td><input type="number" name="precio" min="0" step="0.01" value="${datos.precio !== undefined ? datos.precio : 100}" required placeholder="Precio"></td>
         <td class="total-fila">$0.00</td>
         <td><button type="button" class="del-btn" title="Quitar fila">&times;</button></td>
       `;
