@@ -22,19 +22,6 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename=presupuesto.pdf');
   const doc = new PDFDocument({ size: 'A4', margin: 36 });
 
-  // --- Marca de agua: fondo.svg, opaca, centrada ---
-  try {
-    const fondoPath = path.join(process.cwd(), 'fondo.svg');
-    if (fs.existsSync(fondoPath)) {
-      const svgFondo = fs.readFileSync(fondoPath, 'utf8');
-      doc.save();
-      doc.opacity(1); // Solo la imagen, no el resto
-      doc.svg(svgFondo, 82, 140, { width: 430, height: 430 });
-      doc.restore();
-      doc.opacity(1); // ¡Asegura que TODO el resto del PDF queda normal!
-    }
-  } catch (e) {}
-
   // --- Datos empresa (arriba izquierda) ---
   doc.fontSize(13).font('Helvetica-Bold').fillColor('#222')
     .text('Reconstructora Unión S.A', 36, 36);
@@ -43,13 +30,12 @@ module.exports = async (req, res) => {
     .text('Olavarría, Pcia. de Buenos Aires', 36, 68)
     .text('olavarria@reconstructoraunion.com', 36, 82);
 
-  // --- Logo.svg entre empresa y cliente, SIN opacidad ---
+  // --- Logo.png entre empresa y cliente, sin opacidad ---
   try {
-    const logoPath = path.join(process.cwd(), 'logo.svg');
+    const logoPath = path.join(process.cwd(), 'logo.png');
     if (fs.existsSync(logoPath)) {
-      const svgLogo = fs.readFileSync(logoPath, 'utf8');
-      // Entre bloques: Y=105 (ajusta si lo querés más arriba/abajo)
-      doc.svg(svgLogo, 210, 105, { width: 150, height: 90 });
+      // Centrado arriba (ajusta la posición según prefieras)
+      doc.image(logoPath, 210, 105, { width: 150 });
     }
   } catch (e) {}
 
@@ -68,10 +54,24 @@ module.exports = async (req, res) => {
   doc.font('Helvetica-Bold').fontSize(15).fillColor('#000')
     .text('Presupuesto por Ud. requerido', 36, 200, { align: 'left', width: 500 });
 
+  // --- Marca de agua fondo.png opaca, detrás de la tabla ---
+  // (Debe ir después de la leyenda, antes de la tabla)
+  try {
+    const fondoPath = path.join(process.cwd(), 'fondo.png');
+    if (fs.existsSync(fondoPath)) {
+      // Opciones: ancho total de tabla ~480px (510-36), centrado vertical en hoja (A4=842px), Y~250
+      doc.save();
+      doc.opacity(0.11); // Marca de agua suave
+      // Calcula X centrado: (A4 ancho=595, margen izq=36, ancho img=420) => x = (595-420)/2 ≈ 87
+      doc.image(fondoPath, 87, 240, { width: 420 });
+      doc.restore();
+    }
+  } catch (e) {}
+
   // --- Tabla de productos ---
   doc.font('Helvetica-Bold').fontSize(11).fillColor('#000');
   const col = [36, 110, 340, 410, 510];
-  const tableTop = 235; // Después de la leyenda
+  const tableTop = 235; // Después de la leyenda (y debajo de la marca de agua)
   doc.text('Cant.', col[0], tableTop, { width: col[1]-col[0], align:'center' });
   doc.text('Descripción', col[1], tableTop, { width: col[2]-col[1], align:'center' });
   doc.text('Precio/U', col[2], tableTop, { width: col[3]-col[2], align:'center' });
