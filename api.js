@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
   catch { res.statusCode = 400; res.end('Datos inválidos'); return; }
 
   const {
-    nombreCliente = '', cuitCliente = '', condiciones = '', productos = []
+    nombreCliente = '', cuitCliente = '', condiciones = '', observaciones = '', productos = [], ivaIncluido = false
   } = data;
 
   res.setHeader('Content-Type', 'application/pdf');
@@ -45,13 +45,11 @@ module.exports = async (req, res) => {
   try {
     const logoPath = path.join(process.cwd(), 'logo.png');
     if (fs.existsSync(logoPath)) {
-      // Centrado arriba, ajusta Y=25 según necesites
       doc.image(logoPath, (595 - 150) / 2, 25, { width: 150 });
     }
   } catch (e) {}
 
   // --- Datos cliente (arriba derecha) ---
-  // Ancho A4 = 595, margen = 36 => x = 595 - 36 - ancho_caja
   const boxWidth = 190;
   const clientX = 595 - 36 - boxWidth;
   let yCliente = 36;
@@ -93,13 +91,24 @@ module.exports = async (req, res) => {
   // --- Total final de la tabla ---
   doc.moveTo(col[0], y+2).lineTo(col[4], y+2).strokeColor('#000').stroke();
   doc.font('Helvetica-Bold').fontSize(12).fillColor('#000');
-  doc.text('Total:', col[2], y+10, { width: col[3]-col[2], align:'center' });
+  const leyendaTotal = ivaIncluido ? 'Total (IVA Incluido):' : 'Total:';
+  doc.text(leyendaTotal, col[2], y+10, { width: col[3]-col[2], align:'center' });
   doc.text(`$${totalGeneral.toFixed(2)}`, col[3], y+10, { width: col[4]-col[3], align:'center' });
 
   // --- Condiciones de pago debajo de la tabla ---
   y += 36;
   doc.font('Helvetica').fontSize(11).fillColor('#222')
     .text(`Condiciones de pago: ${condiciones}`, 36, y, { width: 480, align: 'left' });
+
+  // --- Observaciones debajo de condiciones de pago ---
+  if (observaciones && observaciones.trim().length > 0) {
+    y += 24;
+    doc.font('Helvetica-Bold').fontSize(11).fillColor('#222')
+      .text('Observaciones:', 36, y, { width: 480, align: 'left' });
+    y += 16;
+    doc.font('Helvetica').fontSize(10).fillColor('#222')
+      .text(observaciones, 36, y, { width: 480, align: 'left' });
+  }
 
   doc.end();
   doc.pipe(res);
