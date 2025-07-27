@@ -107,6 +107,7 @@ td:last-child, th:last-child {
   text-align: left;       /* IZQUIERDA */
   letter-spacing: 0.5px;
 }
+
 .totales {
   margin-top: 14px;
   text-align: right;

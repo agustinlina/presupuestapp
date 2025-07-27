@@ -22,11 +22,10 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename=presupuesto.pdf');
   const doc = new PDFDocument({ size: 'A4', margin: 36 });
 
-  // Marca de agua fondo.svg
+  // Marca de agua fondo.svg (si está presente)
   const fondoPath = path.join(process.cwd(), 'fondo.svg');
   if (fs.existsSync(fondoPath)) {
     const svg = fs.readFileSync(fondoPath, 'utf8');
-    // Fondo grande y transparente en el centro
     doc.save();
     doc.opacity(0.08);
     doc.svg(svg, 80, 170, { width: 450 });
@@ -42,7 +41,7 @@ module.exports = async (req, res) => {
     .text('Olavarría, Pcia. de Buenos Aires', 36, 68)
     .text('olavarria@reconstructoraunion.com', 36, 82);
 
-  // Logo.svg en el centro superior
+  // Logo.svg en el centro superior (si está presente)
   const logoPath = path.join(process.cwd(), 'logo.svg');
   if (fs.existsSync(logoPath)) {
     const svgLogo = fs.readFileSync(logoPath, 'utf8');
@@ -60,11 +59,11 @@ module.exports = async (req, res) => {
     .text('Fecha:', rightX, 96)
     .text(new Date().toLocaleDateString('es-AR'), rightX, 108);
 
-  // Leyenda, alineada a izquierda y espacio
+  // Leyenda alineada a izquierda y espacio
   doc.moveDown(2.3);
   doc.font('Helvetica-Bold').fontSize(15).fillColor('#000')
     .text('Presupuesto por Ud. requerido', 36, 148, { align: 'left', width: 500 });
-  doc.moveDown(2.2); // MÁS espacio antes de la tabla
+  doc.moveDown(2.2);
 
   // Tabla de productos
   doc.font('Helvetica-Bold').fontSize(11).fillColor('#000');
