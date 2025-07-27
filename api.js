@@ -2,6 +2,13 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 
+// Función para formato argentino de números (miles . decimales ,)
+function formatMonto(n) {
+  return n.toFixed(2)
+    .replace('.', ',')
+    .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.statusCode = 405;
@@ -41,11 +48,12 @@ module.exports = async (req, res) => {
     .text('Olavarría, Pcia. de Buenos Aires', 36, 68)
     .text('olavarria@reconstructoraunion.com', 36, 82);
 
-  // --- Logo.png centrado arriba ---
+  // --- Logo.png centrado arriba (tamaño reducido un 30%) ---
   try {
     const logoPath = path.join(process.cwd(), 'logo.png');
     if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, (595 - 150) / 2, 25, { width: 150 });
+      const logoWidth = 105; // 30% menos que 150
+      doc.image(logoPath, (595 - logoWidth) / 2, 25, { width: logoWidth });
     }
   } catch (e) {}
 
@@ -69,10 +77,12 @@ module.exports = async (req, res) => {
   doc.font('Helvetica-Bold').fontSize(11).fillColor('#000');
   const col = [36, 110, 340, 410, 510];
   const tableTop = 235;
-  doc.text('Cant.', col[0], tableTop, { width: col[1]-col[0], align:'center' });
-  doc.text('Descripción', col[1], tableTop, { width: col[2]-col[1], align:'center' });
-  doc.text('Precio/U', col[2], tableTop, { width: col[3]-col[2], align:'center' });
-  doc.text('Total', col[3], tableTop, { width: col[4]-col[3], align:'center' });
+
+  // Títulos de columnas alineados a la izquierda
+  doc.text('Cant.', col[0], tableTop, { width: col[1]-col[0], align:'left' });
+  doc.text('Descripción', col[1], tableTop, { width: col[2]-col[1], align:'left' });
+  doc.text('Precio/U', col[2], tableTop, { width: col[3]-col[2], align:'left' });
+  doc.text('Total', col[3], tableTop, { width: col[4]-col[3], align:'left' });
 
   let y = tableTop + 18;
   let totalGeneral = 0;
@@ -83,8 +93,8 @@ module.exports = async (req, res) => {
     totalGeneral += total;
     doc.text(cantidad, col[0], y, { width: col[1]-col[0], align:'center' });
     doc.text(descripcion, col[1], y, { width: col[2]-col[1], align:'left' });
-    doc.text(`$${precio.toFixed(2)}`, col[2], y, { width: col[3]-col[2], align:'center' });
-    doc.text(`$${total.toFixed(2)}`, col[3], y, { width: col[4]-col[3], align:'center' });
+    doc.text(`$${formatMonto(precio)}`, col[2], y, { width: col[3]-col[2], align:'right' });
+    doc.text(`$${formatMonto(total)}`, col[3], y, { width: col[4]-col[3], align:'right' });
     y += 22;
   });
 
@@ -92,17 +102,20 @@ module.exports = async (req, res) => {
   doc.moveTo(col[0], y+2).lineTo(col[4], y+2).strokeColor('#000').stroke();
   doc.font('Helvetica-Bold').fontSize(12).fillColor('#000');
   const leyendaTotal = ivaIncluido ? 'Total (IVA Incluido):' : 'Total:';
-  doc.text(leyendaTotal, col[2], y+10, { width: col[3]-col[2], align:'center' });
-  doc.text(`$${totalGeneral.toFixed(2)}`, col[3], y+10, { width: col[4]-col[3], align:'center' });
+  doc.text(leyendaTotal, col[2], y+10, { width: col[3]-col[2], align:'right' });
+  doc.text(`$${formatMonto(totalGeneral)}`, col[3], y+10, { width: col[4]-col[3], align:'right' });
 
-  // --- Condiciones de pago debajo de la tabla ---
+  // --- Condiciones de pago debajo de la tabla (negrita + texto debajo) ---
   y += 36;
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#222')
+    .text('Condiciones de pago:', 36, y, { width: 480, align: 'left' });
+  y += 16;
   doc.font('Helvetica').fontSize(11).fillColor('#222')
-    .text(`Condiciones de pago: ${condiciones}`, 36, y, { width: 480, align: 'left' });
+    .text(condiciones, 36, y, { width: 480, align: 'left' });
 
   // --- Observaciones debajo de condiciones de pago ---
   if (observaciones && observaciones.trim().length > 0) {
-    y += 24;
+    y += 28;
     doc.font('Helvetica-Bold').fontSize(11).fillColor('#222')
       .text('Observaciones:', 36, y, { width: 480, align: 'left' });
     y += 16;
