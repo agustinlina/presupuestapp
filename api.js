@@ -9,6 +9,12 @@ function formatMonto(n) {
     .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
+// Función para limpiar y armar nombre de archivo
+function generarNombreArchivo(nombreEmpresa, fechaEmision) {
+  let base = nombreEmpresa.replace(/[^\w\d]/g, '_').replace(/_+/g, '_');
+  return `${base}_${fechaEmision}.pdf`;
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.statusCode = 405;
@@ -22,11 +28,22 @@ module.exports = async (req, res) => {
   catch { res.statusCode = 400; res.end('Datos inválidos'); return; }
 
   const {
-    nombreCliente = '', cuitCliente = '', condiciones = '', observaciones = '', productos = [], ivaIncluido = false
+    nombreCliente = '',
+    cuitCliente = '',
+    condiciones = '',
+    observaciones = '',
+    productos = [],
+    ivaIncluido = false,
+    fechaValidez = ''
   } = data;
 
+  // Fecha emisión (hoy)
+  const fechaEmision = new Date().toLocaleDateString('es-AR');
+  // Nombre del archivo
+  const nombreArchivo = generarNombreArchivo(nombreCliente || "Presupuesto", fechaEmision);
+
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename=presupuesto.pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${nombreArchivo}"`);
   const doc = new PDFDocument({ size: 'A4', margin: 36 });
 
   // --- Marca de agua fondo.png, detrás de la tabla ---
@@ -67,19 +84,20 @@ module.exports = async (req, res) => {
   doc.font('Helvetica').fontSize(10).fillColor('#222')
     .text(`CUIT: ${cuitCliente}`, clientX, yCliente, { width: boxWidth, align: 'right' });
   yCliente += 14;
-  doc.text(`Fecha: ${new Date().toLocaleDateString('es-AR')}`, clientX, yCliente, { width: boxWidth, align: 'right' });
+  doc.text(`Fecha de emisión: ${fechaEmision}`, clientX, yCliente, { width: boxWidth, align: 'right' });
+  yCliente += 14;
+  if (fechaValidez && fechaValidez.trim().length > 0) {
+    doc.text(`Validez del presupuesto: ${fechaValidez}`, clientX, yCliente, { width: boxWidth, align: 'right' });
+  }
 
   // --- Leyenda alineada a izquierda, espacio abajo, una sola línea ---
   doc.font('Helvetica-Bold').fontSize(15).fillColor('#000')
     .text('Presupuesto por Ud. requerido', 36, 200, { align: 'left', width: 500 });
 
   // --- Tabla de productos de margen a margen ---
-  // Margen = 36, Ancho hoja = 595, Utilizable = 559 - 36 = 523px
-  // Defino proporciones: Cantidad (10%), Descripción (46%), Precio (22%), Total (22%)
   const tableLeft = 36;
   const tableRight = 559; // 595 - 36
   const tableWidth = tableRight - tableLeft;
-
   const col = [
     tableLeft,
     tableLeft + Math.floor(tableWidth * 0.10),             // Cantidad
@@ -90,11 +108,11 @@ module.exports = async (req, res) => {
 
   const tableTop = 235;
 
-  // Títulos de columnas alineados a la izquierda
+  // Títulos de columnas alineados a la izquierda (precio unitario)
   doc.font('Helvetica-Bold').fontSize(11).fillColor('#000');
   doc.text('Cant.', col[0], tableTop, { width: col[1]-col[0], align:'left' });
   doc.text('Descripción', col[1], tableTop, { width: col[2]-col[1], align:'left' });
-  doc.text('Precio/U', col[2], tableTop, { width: col[3]-col[2], align:'left' });
+  doc.text('Precio unitario', col[2], tableTop, { width: col[3]-col[2], align:'left' });
   doc.text('Total', col[3], tableTop, { width: col[4]-col[3], align:'left' });
 
   let y = tableTop + 18;

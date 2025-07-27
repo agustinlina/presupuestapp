@@ -4,6 +4,42 @@
   <meta charset="UTF-8">
   <title>Presupuestador Unión S.A</title>
   <link rel="stylesheet" href="estilos.css">
+  <style>
+    input, textarea, select {
+      min-width: 180px;
+      max-width: 220px;
+      width: 200px;
+      box-sizing: border-box;
+      padding: 5px 8px;
+      font-size: 1rem;
+    }
+    textarea {
+      width: 100%;
+      min-width: 200px;
+      max-width: 99%;
+    }
+    label {
+      margin-top: 12px;
+      margin-bottom: 2px;
+      display: block;
+    }
+    .table-container table input {
+      min-width: 60px;
+      max-width: 100px;
+      width: 90px;
+      text-align: left;
+    }
+    .table-container table td {
+      padding: 4px 2px;
+    }
+    .leyenda {
+      font-size: 1.15rem;
+      font-weight: bold;
+      margin: 32px 0 40px 0;
+      text-align: left;
+      letter-spacing: 0.5px;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -14,6 +50,9 @@
 
       <label>CUIT cliente:</label>
       <input name="cuitCliente" required pattern="[0-9\-]{11,13}" value="99-99999999-9" placeholder="99-99999999-9">
+
+      <label>Validez del presupuesto (fecha):</label>
+      <input name="fechaValidez" type="date">
 
       <div style="display: flex; align-items: center; gap:10px; margin: 10px 0;">
         <label for="ivaIncluido" style="margin: 0;">¿IVA incluido?</label>
@@ -29,10 +68,10 @@
         <table id="tablaProductos">
           <thead>
             <tr>
-              <th>Cantidad</th>
-              <th>Descripción</th>
-              <th>Precio x unidad</th>
-              <th>Total</th>
+              <th style="text-align:left;">Cantidad</th>
+              <th style="text-align:left;">Descripción</th>
+              <th style="text-align:left;">Precio unitario</th>
+              <th style="text-align:left;">Total</th>
               <th>Quitar</th>
             </tr>
           </thead>
@@ -41,7 +80,7 @@
         <button type="button" class="btn" id="agregarFila">Agregar producto</button>
       </div>
 
-      <div class="totales">Total: $<span id="totalGeneral">0.00</span></div>
+      <div class="totales">Total: $<span id="totalGeneral">0,00</span></div>
 
       <label>Observaciones:</label>
       <textarea name="observaciones" rows="2" placeholder="Aclaraciones, entregas, condiciones especiales, etc."></textarea>
@@ -60,7 +99,7 @@
         <td><input type="number" name="cantidad" min="1" value="${datos.cantidad !== undefined ? datos.cantidad : 1}" required></td>
         <td><input type="text" name="descripcion" value="${datos.descripcion !== undefined ? datos.descripcion : 'Producto genérico'}" required></td>
         <td><input type="number" name="precio" min="0" step="0.01" value="${datos.precio !== undefined ? datos.precio : 100}" required></td>
-        <td class="total-fila">$0.00</td>
+        <td class="total-fila">$0,00</td>
         <td><button type="button" class="del-btn" title="Quitar fila">&times;</button></td>
       `;
       tbody.appendChild(tr);
@@ -80,16 +119,23 @@
 
     agregarFilaBtn.onclick = () => crearFila();
 
+    // Formato argentino para miles y decimales
+    function formatMonto(n) {
+      return n.toFixed(2)
+        .replace('.', ',')
+        .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
     function calcularTotales() {
       let total = 0;
       tbody.querySelectorAll('tr').forEach(tr => {
         const cantidad = parseFloat(tr.querySelector('[name="cantidad"]').value) || 0;
         const precio = parseFloat(tr.querySelector('[name="precio"]').value) || 0;
         const subtotal = cantidad * precio;
-        tr.querySelector('.total-fila').textContent = subtotal ? `$${subtotal.toFixed(2)}` : '$0.00';
+        tr.querySelector('.total-fila').textContent = subtotal ? `$${formatMonto(subtotal)}` : '$0,00';
         total += subtotal;
       });
-      totalGeneral.textContent = total.toFixed(2);
+      totalGeneral.textContent = formatMonto(total);
     }
     tbody.addEventListener('input', calcularTotales);
 
@@ -119,6 +165,7 @@
         condiciones: form.condiciones.value,
         observaciones: form.observaciones.value,
         ivaIncluido: form.ivaIncluido.checked,
+        fechaValidez: form.fechaValidez.value,
         productos
       };
       const res = await fetch('/api', {
@@ -128,10 +175,16 @@
       });
       if (res.ok) {
         const blob = await res.blob();
+        // Extraer nombre del archivo de Content-Disposition si lo deseas:
+        const disposition = res.headers.get('Content-Disposition');
+        let fileName = "presupuesto.pdf";
+        if (disposition && disposition.includes("filename=")) {
+          fileName = disposition.split("filename=")[1].replace(/["']/g, "");
+        }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'presupuesto.pdf';
+        a.download = fileName;
         a.click();
         URL.revokeObjectURL(url);
       } else {
