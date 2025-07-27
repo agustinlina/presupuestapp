@@ -22,17 +22,20 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename=presupuesto.pdf');
   const doc = new PDFDocument({ size: 'A4', margin: 36 });
 
-  // --- Marca de agua (fondo.svg) grande y centrada ---
-  const fondoPath = path.join(process.cwd(), 'fondo.svg');
-  if (fs.existsSync(fondoPath)) {
-    const svgFondo = fs.readFileSync(fondoPath, 'utf8');
-    // Calcular el centro (ancho de página A4 = 595, alto = 842, menos margen)
-    doc.save();
-    doc.opacity(0.08);
-    // Ajusta el tamaño de la marca de agua según tu SVG (acá 430x430 centrado)
-    doc.svg(svgFondo, 82, 150, { width: 430, height: 430 });
-    doc.opacity(1);
-    doc.restore();
+  // --- Marca de agua (fondo.svg) grande y centrada, si existe ---
+  try {
+    const fondoPath = path.join(process.cwd(), 'fondo.svg');
+    if (fs.existsSync(fondoPath)) {
+      const svgFondo = fs.readFileSync(fondoPath, 'utf8');
+      doc.save();
+      doc.opacity(0.08);
+      // Centrado visual para A4 y grande
+      doc.svg(svgFondo, 82, 140, { width: 430, height: 430 });
+      doc.opacity(1);
+      doc.restore();
+    }
+  } catch (e) {
+    // Si no está o da error, no se agrega fondo
   }
 
   // --- Datos empresa (arriba izquierda) ---
@@ -42,6 +45,18 @@ module.exports = async (req, res) => {
     .text('CUIT: 30716717565', 36, 54)
     .text('Olavarría, Pcia. de Buenos Aires', 36, 68)
     .text('olavarria@reconstructoraunion.com', 36, 82);
+
+  // --- Logo.svg (entre empresa y cliente), si existe ---
+  try {
+    const logoPath = path.join(process.cwd(), 'logo.svg');
+    if (fs.existsSync(logoPath)) {
+      const svgLogo = fs.readFileSync(logoPath, 'utf8');
+      // Centrado horizontal, Y = 100 (ajusta según tus datos)
+      doc.svg(svgLogo, 210, 100, { width: 150, height: 90 });
+    }
+  } catch (e) {
+    // Si no está o da error, sigue sin logo
+  }
 
   // --- Datos cliente (arriba derecha) ---
   const rightX = 360;
@@ -54,24 +69,14 @@ module.exports = async (req, res) => {
     .text('Fecha:', rightX, 96)
     .text(new Date().toLocaleDateString('es-AR'), rightX, 108);
 
-  // --- Imagen logo.svg entre ambos bloques ---
-  const logoPath = path.join(process.cwd(), 'logo.svg');
-  if (fs.existsSync(logoPath)) {
-    const svgLogo = fs.readFileSync(logoPath, 'utf8');
-    // Centrado horizontal arriba, debajo de los datos, ajusta tamaño si lo necesitás
-    doc.svg(svgLogo, 210, 36, { width: 150, height: 90 }); // Ajusta Y (36) si necesitas más abajo
-  }
-
-  // --- Leyenda alineada a izquierda y con más espacio abajo ---
+  // --- Leyenda alineada a izquierda, espacio abajo, una sola línea ---
   doc.font('Helvetica-Bold').fontSize(15).fillColor('#000')
-    .text('Presupuesto por Ud. requerido', 36, 150, { align: 'left', width: 500, continued: false });
-  // Espacio extra debajo de la leyenda
-  let leyendaY = 180; // Deja espacio hasta la tabla
+    .text('Presupuesto por Ud. requerido', 36, 200, { align: 'left', width: 500 });
 
   // --- Tabla de productos ---
   doc.font('Helvetica-Bold').fontSize(11).fillColor('#000');
   const col = [36, 110, 340, 410, 510];
-  const tableTop = leyendaY;
+  const tableTop = 235; // Después de la leyenda
   doc.text('Cant.', col[0], tableTop, { width: col[1]-col[0], align:'center' });
   doc.text('Descripción', col[1], tableTop, { width: col[2]-col[1], align:'center' });
   doc.text('Precio/U', col[2], tableTop, { width: col[3]-col[2], align:'center' });
@@ -100,4 +105,3 @@ module.exports = async (req, res) => {
   doc.end();
   doc.pipe(res);
 };
-
