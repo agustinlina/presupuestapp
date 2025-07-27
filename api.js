@@ -2,7 +2,7 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 
-// Función para formato argentino de números (miles . decimales ,)
+// Formato miles punto, decimales coma
 function formatMonto(n) {
   return n.toFixed(2)
     .replace('.', ',')
@@ -44,7 +44,7 @@ module.exports = async (req, res) => {
   doc.fontSize(13).font('Helvetica-Bold').fillColor('#222')
     .text('Reconstructora Unión S.A', 36, 36);
   doc.fontSize(10).font('Helvetica').fillColor('#333')
-    .text('CUIT: 30716717565', 36, 54)
+    .text('CUIT: 30-71671756-5', 36, 54)
     .text('Olavarría, Pcia. de Buenos Aires', 36, 68)
     .text('olavarria@reconstructoraunion.com', 36, 82);
 
@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
   try {
     const logoPath = path.join(process.cwd(), 'logo.png');
     if (fs.existsSync(logoPath)) {
-      const logoWidth = 105; // 30% menos que 150
+      const logoWidth = 105;
       doc.image(logoPath, (595 - logoWidth) / 2, 25, { width: logoWidth });
     }
   } catch (e) {}
@@ -73,12 +73,25 @@ module.exports = async (req, res) => {
   doc.font('Helvetica-Bold').fontSize(15).fillColor('#000')
     .text('Presupuesto por Ud. requerido', 36, 200, { align: 'left', width: 500 });
 
-  // --- Tabla de productos ---
-  doc.font('Helvetica-Bold').fontSize(11).fillColor('#000');
-  const col = [36, 110, 340, 410, 510];
+  // --- Tabla de productos de margen a margen ---
+  // Margen = 36, Ancho hoja = 595, Utilizable = 559 - 36 = 523px
+  // Defino proporciones: Cantidad (10%), Descripción (46%), Precio (22%), Total (22%)
+  const tableLeft = 36;
+  const tableRight = 559; // 595 - 36
+  const tableWidth = tableRight - tableLeft;
+
+  const col = [
+    tableLeft,
+    tableLeft + Math.floor(tableWidth * 0.10),             // Cantidad
+    tableLeft + Math.floor(tableWidth * 0.10) + Math.floor(tableWidth * 0.46), // Descripción
+    tableLeft + Math.floor(tableWidth * 0.10) + Math.floor(tableWidth * 0.46) + Math.floor(tableWidth * 0.22), // Precio
+    tableRight // Total
+  ];
+
   const tableTop = 235;
 
   // Títulos de columnas alineados a la izquierda
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#000');
   doc.text('Cant.', col[0], tableTop, { width: col[1]-col[0], align:'left' });
   doc.text('Descripción', col[1], tableTop, { width: col[2]-col[1], align:'left' });
   doc.text('Precio/U', col[2], tableTop, { width: col[3]-col[2], align:'left' });
@@ -93,8 +106,8 @@ module.exports = async (req, res) => {
     totalGeneral += total;
     doc.text(cantidad, col[0], y, { width: col[1]-col[0], align:'center' });
     doc.text(descripcion, col[1], y, { width: col[2]-col[1], align:'left' });
-    doc.text(`$${formatMonto(precio)}`, col[2], y, { width: col[3]-col[2], align:'right' });
-    doc.text(`$${formatMonto(total)}`, col[3], y, { width: col[4]-col[3], align:'right' });
+    doc.text(`$${formatMonto(precio)}`, col[2], y, { width: col[3]-col[2], align:'left' });
+    doc.text(`$${formatMonto(total)}`, col[3], y, { width: col[4]-col[3], align:'left' });
     y += 22;
   });
 
@@ -108,19 +121,19 @@ module.exports = async (req, res) => {
   // --- Condiciones de pago debajo de la tabla (negrita + texto debajo) ---
   y += 36;
   doc.font('Helvetica-Bold').fontSize(11).fillColor('#222')
-    .text('Condiciones de pago:', 36, y, { width: 480, align: 'left' });
+    .text('Condiciones de pago:', tableLeft, y, { width: tableWidth, align: 'left' });
   y += 16;
   doc.font('Helvetica').fontSize(11).fillColor('#222')
-    .text(condiciones, 36, y, { width: 480, align: 'left' });
+    .text(condiciones, tableLeft, y, { width: tableWidth, align: 'left' });
 
   // --- Observaciones debajo de condiciones de pago ---
   if (observaciones && observaciones.trim().length > 0) {
     y += 28;
     doc.font('Helvetica-Bold').fontSize(11).fillColor('#222')
-      .text('Observaciones:', 36, y, { width: 480, align: 'left' });
+      .text('Observaciones:', tableLeft, y, { width: tableWidth, align: 'left' });
     y += 16;
     doc.font('Helvetica').fontSize(10).fillColor('#222')
-      .text(observaciones, 36, y, { width: 480, align: 'left' });
+      .text(observaciones, tableLeft, y, { width: tableWidth, align: 'left' });
   }
 
   doc.end();
