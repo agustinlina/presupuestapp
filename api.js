@@ -24,11 +24,11 @@ module.exports = async (req, res) => {
 
   // --- Marca de agua: fondo.svg, opaca, centrada ---
   try {
-    const fondoPath = path.join(process.cwd(), './fondo.svg');
+    const fondoPath = path.join(process.cwd(), 'fondo.svg');
     if (fs.existsSync(fondoPath)) {
       const svgFondo = fs.readFileSync(fondoPath, 'utf8');
       doc.save();
-      doc.opacity(0.08); // Solo la imagen, no el resto
+      doc.opacity(1); // Solo la imagen, no el resto
       doc.svg(svgFondo, 82, 140, { width: 430, height: 430 });
       doc.restore();
       doc.opacity(1); // ¡Asegura que TODO el resto del PDF queda normal!
@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
 
   // --- Logo.svg entre empresa y cliente, SIN opacidad ---
   try {
-    const logoPath = path.join(process.cwd(), './logo.svg');
+    const logoPath = path.join(process.cwd(), 'logo.svg');
     if (fs.existsSync(logoPath)) {
       const svgLogo = fs.readFileSync(logoPath, 'utf8');
       // Entre bloques: Y=105 (ajusta si lo querés más arriba/abajo)
