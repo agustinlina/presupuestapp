@@ -22,6 +22,17 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename=presupuesto.pdf');
   const doc = new PDFDocument({ size: 'A4', margin: 36 });
 
+  // --- Marca de agua fondo.png, detrás de la tabla ---
+  try {
+    const fondoPath = path.join(process.cwd(), 'fondo.png');
+    if (fs.existsSync(fondoPath)) {
+      doc.save();
+      doc.opacity(0.11);
+      doc.image(fondoPath, 87, 240, { width: 420 });
+      doc.restore();
+    }
+  } catch (e) {}
+
   // --- Datos empresa (arriba izquierda) ---
   doc.fontSize(13).font('Helvetica-Bold').fillColor('#222')
     .text('Reconstructora Unión S.A', 36, 36);
@@ -30,48 +41,36 @@ module.exports = async (req, res) => {
     .text('Olavarría, Pcia. de Buenos Aires', 36, 68)
     .text('olavarria@reconstructoraunion.com', 36, 82);
 
-  // --- Logo.png entre empresa y cliente, sin opacidad ---
+  // --- Logo.png centrado arriba ---
   try {
     const logoPath = path.join(process.cwd(), 'logo.png');
     if (fs.existsSync(logoPath)) {
-      // Centrado arriba (ajusta la posición según prefieras)
-      doc.image(logoPath, 210, 105, { width: 150 });
+      // Centrado arriba, ajusta Y=25 según necesites
+      doc.image(logoPath, (595 - 150) / 2, 25, { width: 150 });
     }
   } catch (e) {}
 
   // --- Datos cliente (arriba derecha) ---
-  const rightX = 360;
-  doc.fontSize(11).font('Helvetica-Bold').fillColor('#111')
-    .text('Presupuestado para:', rightX, 36);
+  // Ancho A4 = 595, margen = 36 => x = 595 - 36 - ancho_caja
+  const boxWidth = 190;
+  const clientX = 595 - 36 - boxWidth;
+  let yCliente = 36;
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#222')
+    .text(nombreCliente, clientX, yCliente, { width: boxWidth, align: 'right' });
+  yCliente += 18;
   doc.font('Helvetica').fontSize(10).fillColor('#222')
-    .text(nombreCliente, rightX, 54)
-    .text(`CUIT: ${cuitCliente}`, rightX, 68)
-    .text(`Condiciones: ${condiciones}`, rightX, 82)
-    .text('Fecha:', rightX, 96)
-    .text(new Date().toLocaleDateString('es-AR'), rightX, 108);
+    .text(`CUIT: ${cuitCliente}`, clientX, yCliente, { width: boxWidth, align: 'right' });
+  yCliente += 14;
+  doc.text(`Fecha: ${new Date().toLocaleDateString('es-AR')}`, clientX, yCliente, { width: boxWidth, align: 'right' });
 
   // --- Leyenda alineada a izquierda, espacio abajo, una sola línea ---
   doc.font('Helvetica-Bold').fontSize(15).fillColor('#000')
     .text('Presupuesto por Ud. requerido', 36, 200, { align: 'left', width: 500 });
 
-  // --- Marca de agua fondo.png opaca, detrás de la tabla ---
-  // (Debe ir después de la leyenda, antes de la tabla)
-  try {
-    const fondoPath = path.join(process.cwd(), 'fondo.png');
-    if (fs.existsSync(fondoPath)) {
-      // Opciones: ancho total de tabla ~480px (510-36), centrado vertical en hoja (A4=842px), Y~250
-      doc.save();
-      doc.opacity(0.11); // Marca de agua suave
-      // Calcula X centrado: (A4 ancho=595, margen izq=36, ancho img=420) => x = (595-420)/2 ≈ 87
-      doc.image(fondoPath, 87, 240, { width: 420 });
-      doc.restore();
-    }
-  } catch (e) {}
-
   // --- Tabla de productos ---
   doc.font('Helvetica-Bold').fontSize(11).fillColor('#000');
   const col = [36, 110, 340, 410, 510];
-  const tableTop = 235; // Después de la leyenda (y debajo de la marca de agua)
+  const tableTop = 235;
   doc.text('Cant.', col[0], tableTop, { width: col[1]-col[0], align:'center' });
   doc.text('Descripción', col[1], tableTop, { width: col[2]-col[1], align:'center' });
   doc.text('Precio/U', col[2], tableTop, { width: col[3]-col[2], align:'center' });
@@ -91,11 +90,16 @@ module.exports = async (req, res) => {
     y += 22;
   });
 
-  // --- Total final ---
+  // --- Total final de la tabla ---
   doc.moveTo(col[0], y+2).lineTo(col[4], y+2).strokeColor('#000').stroke();
   doc.font('Helvetica-Bold').fontSize(12).fillColor('#000');
   doc.text('Total:', col[2], y+10, { width: col[3]-col[2], align:'center' });
   doc.text(`$${totalGeneral.toFixed(2)}`, col[3], y+10, { width: col[4]-col[3], align:'center' });
+
+  // --- Condiciones de pago debajo de la tabla ---
+  y += 36;
+  doc.font('Helvetica').fontSize(11).fillColor('#222')
+    .text(`Condiciones de pago: ${condiciones}`, 36, y, { width: 480, align: 'left' });
 
   doc.end();
   doc.pipe(res);
