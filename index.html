@@ -6,15 +6,12 @@
   <link rel="stylesheet" href="estilos.css">
   <style>
     input, textarea, select {
-      min-width: 180px;
-      max-width: 220px;
-      width: 200px;
+      width: 100%;
       box-sizing: border-box;
       padding: 5px 8px;
       font-size: 1rem;
     }
     textarea {
-      width: 100%;
       min-width: 200px;
       max-width: 99%;
     }
@@ -24,20 +21,28 @@
       display: block;
     }
     .table-container table input {
-      min-width: 60px;
-      max-width: 100px;
-      width: 90px;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
       text-align: left;
     }
     .table-container table td {
       padding: 4px 2px;
     }
-    .leyenda {
-      font-size: 1.15rem;
-      font-weight: bold;
-      margin: 32px 0 40px 0;
+    .table-container table {
+      table-layout: fixed;
+      width: 100%;
+    }
+    .table-container th, .table-container td {
       text-align: left;
-      letter-spacing: 0.5px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .totales {
+      margin-top: 14px;
+      font-weight: bold;
+      font-size: 1.08rem;
     }
   </style>
 </head>
@@ -51,8 +56,8 @@
       <label>CUIT cliente:</label>
       <input name="cuitCliente" required pattern="[0-9\-]{11,13}" value="99-99999999-9" placeholder="99-99999999-9">
 
-      <label>Validez del presupuesto (fecha):</label>
-      <input name="fechaValidez" type="date">
+      <label>Fecha de emisión:</label>
+      <input name="fechaEmision" type="date">
 
       <div style="display: flex; align-items: center; gap:10px; margin: 10px 0;">
         <label for="ivaIncluido" style="margin: 0;">¿IVA incluido?</label>
@@ -62,16 +67,14 @@
       <label>Condiciones de venta:</label>
       <input name="condiciones" required value="Contado" placeholder="Contado, 30 días, etc.">
 
-      <div class="leyenda">Presupuesto por Ud. requerido</div>
-
       <div class="table-container">
         <table id="tablaProductos">
           <thead>
             <tr>
-              <th style="text-align:left;">Cantidad</th>
-              <th style="text-align:left;">Descripción</th>
-              <th style="text-align:left;">Precio unitario</th>
-              <th style="text-align:left;">Total</th>
+              <th>Cantidad</th>
+              <th>Descripción</th>
+              <th>Precio unitario</th>
+              <th>Total</th>
               <th>Quitar</th>
             </tr>
           </thead>
@@ -92,6 +95,16 @@
     const tbody = document.querySelector('#tablaProductos tbody');
     const agregarFilaBtn = document.getElementById('agregarFila');
     const totalGeneral = document.getElementById('totalGeneral');
+    const inputFecha = document.querySelector('input[name="fechaEmision"]');
+
+    // Setea la fecha por defecto al día de hoy si está vacío
+    if (inputFecha && !inputFecha.value) {
+      const hoy = new Date();
+      const yyyy = hoy.getFullYear();
+      const mm = String(hoy.getMonth()+1).padStart(2,'0');
+      const dd = String(hoy.getDate()).padStart(2,'0');
+      inputFecha.value = `${yyyy}-${mm}-${dd}`;
+    }
 
     function crearFila(datos={}) {
       const tr = document.createElement('tr');
@@ -159,13 +172,21 @@
         alert('Agregue al menos un producto');
         return;
       }
+
+      // fechaEmision en formato "dd/mm/yyyy"
+      let fechaEmision = form.fechaEmision.value;
+      if (fechaEmision && /^\d{4}-\d{2}-\d{2}$/.test(fechaEmision)) {
+        const [yyyy, mm, dd] = fechaEmision.split('-');
+        fechaEmision = `${dd}/${mm}/${yyyy}`;
+      }
+
       const datos = {
         nombreCliente: form.nombreCliente.value,
         cuitCliente: form.cuitCliente.value,
         condiciones: form.condiciones.value,
         observaciones: form.observaciones.value,
         ivaIncluido: form.ivaIncluido.checked,
-        fechaValidez: form.fechaValidez.value,
+        fechaEmision,
         productos
       };
       const res = await fetch('/api', {
