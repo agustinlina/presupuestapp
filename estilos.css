@@ -56,7 +56,9 @@ label {
   display: block;
   font-weight: 600;
 }
-input, select, textarea {
+input,
+select,
+textarea {
   background: #222;
   color: var(--fg);
   border: 1.6px solid var(--border);
@@ -69,7 +71,8 @@ input, select, textarea {
   outline: none;
   transition: border 0.2s;
 }
-input:focus, textarea:focus {
+input:focus,
+textarea:focus {
   border-color: var(--accent);
 }
 textarea {
@@ -91,7 +94,8 @@ table {
   color: var(--fg);
   font-size: 1.2rem;
 }
-th, td {
+th,
+td {
   border: 1px solid var(--border);
   padding: 18px 9px;
   font-size: 1.25rem;
@@ -104,7 +108,8 @@ th {
   font-weight: bold;
   text-align: left;
 }
-td:last-child, th:last-child {
+td:last-child,
+th:last-child {
   text-align: center;
   width: 54px;
   min-width: 54px;
@@ -131,7 +136,8 @@ td:last-child, th:last-child {
   font-weight: bold;
   letter-spacing: 1.5px;
 }
-.btn:hover, .btn:focus {
+.btn:hover,
+.btn:focus {
   background: #292929;
   border-color: var(--accent);
 }
@@ -155,14 +161,59 @@ td:last-child, th:last-child {
 }
 /* Phone Friendly: ancho y tipografía grandes en móvil */
 
-@media (max-width: 900px) {
-  html { font-size: 20px; }
-  .container { border-radius: 8px; padding: 0.7rem 6px; }
-  h1 { font-size: 1.22rem; }
-  label { font-size: 1.02rem; }
-  input, textarea, select { font-size: 1.07rem; padding: 13px 6px; }
-  th, td { font-size: 1.06rem; padding: 10px 4px; }
-  .btn { font-size: 1.07rem; padding: 14px 0;}
-  .del-btn { font-size: 1.15em; height: 38px; }
-  table { min-width: 410px;}
+@media (max-width: 1200px) {
+  html {
+    font-size: 32px!important;
+  }
+
+  .container {
+    display: none;
+    margin: 0 16px;
+    background: var(--card);
+    padding: 32px 32px;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px #0005;
+    width: 100%;
+    min-width: fit-content;
+    box-sizing: border-box;
+    min-height: fit-content;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .container {
+    border-radius: 8px;
+    padding: 0.7rem 6px;
+  }
+  h1 {
+    font-size: 1.22rem;
+  }
+  label {
+    font-size: 1.02rem;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 1.07rem;
+    padding: 13px 6px;
+  }
+  th,
+  td {
+    font-size: 1.06rem;
+    padding: 10px 4px;
+  }
+  .btn {
+    font-size: 1.07rem;
+    padding: 14px 0;
+  }
+  .del-btn {
+    font-size: 1.15em;
+    height: 38px;
+  }
+  table {
+    min-width: 410px;
+  }
 }
