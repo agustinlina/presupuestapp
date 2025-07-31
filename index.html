@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <title>Presupuestador Unión S.A</title>
-  <link rel="stylesheet" href="estilos.css">    
+  <link rel="stylesheet" href="estilos.css">
 </head>
+
 <body>
   <div class="container">
+    <header>
+      <a href="https://la-union-tool-fzhad2d4o-agustinlinas-projects.vercel.app/calculadora.html">Inicio</a>
+      <a href="https://la-union-tool-fzhad2d4o-agustinlinas-projects.vercel.app/calculadora.html">Calculadora</span></a>
+      <a href="https://la-union-tool-fzhad2d4o-agustinlinas-projects.vercel.app/comercial.html">Plazos de pago</a>
+      <a href="https://la-union-tool-fzhad2d4o-agustinlinas-projects.vercel.app/stock.html">Stock</a>
+      <a href="./stock.html"><span style="text-decoration:underline;">Presupuestador</span></a>
+    </header>
     <h1>Presupuesto Unión S.A</h1>
     <form id="formPresupuesto" autocomplete="off">
       <label>Nombre de la empresa cliente:</label>
@@ -49,7 +58,8 @@
       <div class="totales">Total: $<span id="totalGeneral">0,00</span></div>
 
       <label>Observaciones:</label>
-      <textarea name="observaciones" rows="2" placeholder="Aclaraciones, entregas, condiciones especiales, etc."></textarea>
+      <textarea name="observaciones" rows="2"
+        placeholder="Aclaraciones, entregas, condiciones especiales, etc."></textarea>
 
       <button class="btn" type="submit">Descargar PDF</button>
     </form>
@@ -65,12 +75,12 @@
     if (inputFecha && !inputFecha.value) {
       const hoy = new Date();
       const yyyy = hoy.getFullYear();
-      const mm = String(hoy.getMonth()+1).padStart(2,'0');
-      const dd = String(hoy.getDate()).padStart(2,'0');
+      const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+      const dd = String(hoy.getDate()).padStart(2, '0');
       inputFecha.value = `${yyyy}-${mm}-${dd}`;
     }
 
-    function crearFila(datos={}) {
+    function crearFila(datos = {}) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><input type="number" name="cantidad" min="1" value="${datos.cantidad !== undefined ? datos.cantidad : 1}" required></td>
@@ -112,7 +122,7 @@
         const cantidad = parseFloat(tr.querySelector('[name="cantidad"]').value) || 0;
         const precio = parseFloat(tr.querySelector('[name="precio"]').value) || 0;
         const descuento = parseFloat(tr.querySelector('[name="descuento"]').value) || 0;
-        const subtotal = cantidad * precio * (1 - descuento/100);
+        const subtotal = cantidad * precio * (1 - descuento / 100);
         tr.querySelector('.total-fila').textContent = subtotal ? `$${formatMonto(subtotal)}` : '$0,00';
         total += subtotal;
       });
@@ -205,4 +215,5 @@
     actualizarColumnaTotal();
   </script>
 </body>
+
 </html>
