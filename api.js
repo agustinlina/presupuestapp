@@ -6,7 +6,8 @@ const path = require('path');
 function formatMonto(n) {
   return n.toFixed(2)
     .replace('.', ',')
-    .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    .replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+    .replace(/,(\d\d)$/, ',$1'); // asegurar 2 decimales
 }
 
 // Función para limpiar y armar nombre de archivo
@@ -79,4 +80,101 @@ module.exports = async (req, res) => {
     const logoPath = path.join(process.cwd(), 'logo.png');
     if (fs.existsSync(logoPath)) {
       const logoWidth = 105;
-      doc.image(logoPath, (595 - logoWidth) / 2, 25, { width
+      doc.image(logoPath, (595 - logoWidth) / 2, 25, { width: logoWidth });
+    }
+  } catch (e) {}
+
+  // --- Datos cliente (arriba derecha) ---
+  const boxWidth = 190;
+  const clientX = 595 - 36 - boxWidth;
+  let yCliente = 36;
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#222')
+    .text(nombreCliente, clientX, yCliente, { width: boxWidth, align: 'right' });
+  yCliente += 18;
+  doc.font('Helvetica').fontSize(10).fillColor('#222')
+    .text(`CUIT: ${cuitCliente}`, clientX, yCliente, { width: boxWidth, align: 'right' });
+  yCliente += 14;
+  doc.text(`Fecha de emisión: ${fechaEmitir}`, clientX, yCliente, { width: boxWidth, align: 'right' });
+
+  // --- Leyenda alineada a izquierda, espacio abajo, una sola línea ---
+  doc.font('Helvetica-Bold').fontSize(15).fillColor('#000')
+    .text('Presupuesto por Ud. requerido', 36, 200, { align: 'left', width: 500 });
+
+  // --- Tabla de productos de margen a margen ---
+  const tableLeft = 36;
+  const tableRight = 559; // 595 - 36
+  const tableWidth = tableRight - tableLeft;
+  // Columnas: Cantidad, Descripción, Precio unitario, Descuento %, (Total opcional)
+  //             10%        44%           18%           12%           16%
+  const col = [
+    tableLeft,
+    tableLeft + Math.floor(tableWidth * 0.10), // Cantidad
+    tableLeft + Math.floor(tableWidth * 0.10) + Math.floor(tableWidth * 0.44), // Descripción
+    tableLeft + Math.floor(tableWidth * 0.10) + Math.floor(tableWidth * 0.44) + Math.floor(tableWidth * 0.18), // Precio
+    tableLeft + Math.floor(tableWidth * 0.10) + Math.floor(tableWidth * 0.44) + Math.floor(tableWidth * 0.18) + Math.floor(tableWidth * 0.12), // Descuento
+    tableRight // Total (o fin)
+  ];
+
+  const tableTop = 235;
+
+  // Títulos de columnas alineados a la izquierda
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#000');
+  doc.text('Cant.', col[0], tableTop, { width: col[1]-col[0], align:'left' });
+  doc.text('Descripción', col[1], tableTop, { width: col[2]-col[1], align:'left' });
+  doc.text('Precio unitario', col[2], tableTop, { width: col[3]-col[2], align:'left' });
+  doc.text('Descuento %', col[3], tableTop, { width: col[4]-col[3], align:'left' });
+  if (!ocultarTotal) {
+    doc.text('Total', col[4], tableTop, { width: col[5]-col[4], align:'left' });
+  }
+
+  let y = tableTop + 18;
+  let totalGeneral = 0;
+  doc.font('Helvetica').fontSize(10).fillColor('#111');
+  productos.forEach(prod => {
+    const {cantidad, descripcion, precio, descuento = 0} = prod;
+    // Aplicar descuento
+    const subtotal = cantidad * precio * (1 - (descuento/100));
+    totalGeneral += subtotal;
+    doc.text(cantidad, col[0], y, { width: col[1]-col[0], align:'center' });
+    doc.text(descripcion, col[1], y, { width: col[2]-col[1], align:'left' });
+    doc.text(`$${formatMonto(precio)}`, col[2], y, { width: col[3]-col[2], align:'left' });
+    doc.text(`${descuento}%`, col[3], y, { width: col[4]-col[3], align:'center' });
+    if (!ocultarTotal) {
+      doc.text(`$${formatMonto(subtotal)}`, col[4], y, { width: col[5]-col[4], align:'left' });
+    }
+    y += 22;
+  });
+
+  // --- Total final de la tabla ---
+  if (!ocultarTotal) {
+    doc.moveTo(col[0], y+2).lineTo(col[5], y+2).strokeColor('#000').stroke();
+    doc.font('Helvetica-Bold').fontSize(12).fillColor('#000');
+    const leyendaTotal = ivaIncluido ? 'Total (IVA Incluido):' : 'Total:';
+    doc.text(leyendaTotal, col[3], y+10, { width: col[4]-col[3], align:'right' });
+    doc.text(`$${formatMonto(totalGeneral)}`, col[4], y+10, { width: col[5]-col[4], align:'right' });
+    y += 32;
+  } else {
+    y += 12;
+  }
+
+  // --- Condiciones de pago debajo de la tabla (negrita + texto debajo) ---
+  y += 26;
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#222')
+    .text('Condiciones de pago:', tableLeft, y, { width: tableWidth, align: 'left' });
+  y += 16;
+  doc.font('Helvetica').fontSize(11).fillColor('#222')
+    .text(condiciones, tableLeft, y, { width: tableWidth, align: 'left' });
+
+  // --- Observaciones debajo de condiciones de pago ---
+  if (observaciones && observaciones.trim().length > 0) {
+    y += 28;
+    doc.font('Helvetica-Bold').fontSize(11).fillColor('#222')
+      .text('Observaciones:', tableLeft, y, { width: tableWidth, align: 'left' });
+    y += 16;
+    doc.font('Helvetica').fontSize(10).fillColor('#222')
+      .text(observaciones, tableLeft, y, { width: tableWidth, align: 'left' });
+  }
+
+  doc.end();
+  doc.pipe(res);
+};
