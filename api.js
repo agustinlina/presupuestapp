@@ -129,11 +129,13 @@ module.exports = async (req, res) => {
   doc.font('Helvetica').fontSize(10).fillColor('#111');
   productos.forEach(prod => {
     const {cantidad, descripcion, precio, descuento = 0} = prod;
-    const subtotal = cantidad * precio * (1 - (descuento/100)); // aplica descuento
+    // Precio unitario con descuento aplicado
+    const precioFinal = precio * (1 - (descuento/100));
+    const subtotal = cantidad * precioFinal;
     totalGeneral += subtotal;
     doc.text(cantidad, col[0], y, { width: col[1]-col[0], align:'center' });
     doc.text(descripcion, col[1], y, { width: col[2]-col[1], align:'left' });
-    doc.text(`$${formatMonto(precio)}`, col[2], y, { width: col[3]-col[2], align:'left' });
+    doc.text(`$${formatMonto(precioFinal)}`, col[2], y, { width: col[3]-col[2], align:'left' });
     if (!ocultarTotal) {
       doc.text(`$${formatMonto(subtotal)}`, col[3], y, { width: col[4]-col[3], align:'left' });
     }
