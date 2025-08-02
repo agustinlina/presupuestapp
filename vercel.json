@@ -3,8 +3,7 @@
     { "src": "*.html", "use": "@vercel/static" },
     { "src": "*.css", "use": "@vercel/static" },
     { "src": "*.png", "use": "@vercel/static" },
-    { "src": "*.js", "use": "@vercel/node" },
-    { "src": "*.svg", "use": "@vercel/node" }
+    { "src": "*.js", "use": "@vercel/node" }
     
   ],
   "routes": [
