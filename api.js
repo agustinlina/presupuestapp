@@ -7,7 +7,7 @@ function formatMonto(n) {
   return n.toFixed(2)
     .replace('.', ',')
     .replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-    .replace(/,(\d\d)$/, ',$1'); // asegurar 2 decimales
+    .replace(/,(\d\d)$/, ',$1');
 }
 
 // Función para limpiar y armar nombre de archivo
@@ -145,15 +145,26 @@ module.exports = async (req, res) => {
   // --- Total final de la tabla ---
   if (!ocultarTotal) {
     doc.moveTo(col[0], y+2).lineTo(col[4], y+2).strokeColor('#000').stroke();
-    doc.font('Helvetica-Bold').fontSize(12).fillColor('#000');
-    const leyendaTotal = ivaIncluido ? 'Total (IVA Incluido):' : 'Total:';
-    doc.text(leyendaTotal, col[2], y+10, { width: col[3]-col[2], align:'right' });
-    doc.text(`$${formatMonto(totalGeneral)}`, col[3], y+10, { width: col[4]-col[3], align:'right' });
 
-    // "IVA incluido" más chico, solo si aplica
+    // Total con leyenda "(IVA Incluido)" más chico, en línea
     if (ivaIncluido) {
-      doc.font('Helvetica').fontSize(8).fillColor('#555')
-        .text('IVA incluido', col[3], y+27, { width: col[4]-col[3], align: 'right' });
+      doc.font('Helvetica-Bold').fontSize(12).fillColor('#000');
+      let leyendaX = col[2];
+      let leyendaY = y + 10;
+      const totalLabel = 'Total: ';
+      const ivaLabel = '(IVA Incluido)';
+      // Imprime "Total:" grande
+      doc.text(totalLabel, leyendaX, leyendaY, { continued: true, width: col[3]-col[2], align:'right' });
+      // Imprime "(IVA Incluido)" pequeño, a continuación
+      doc.font('Helvetica').fontSize(8).fillColor('#555');
+      doc.text(ivaLabel, undefined, undefined, { continued: false });
+      // Número grande
+      doc.font('Helvetica-Bold').fontSize(12).fillColor('#000');
+      doc.text(`$${formatMonto(totalGeneral)}`, col[3], y+10, { width: col[4]-col[3], align:'right' });
+    } else {
+      doc.font('Helvetica-Bold').fontSize(12).fillColor('#000');
+      doc.text('Total:', col[2], y+10, { width: col[3]-col[2], align:'right' });
+      doc.text(`$${formatMonto(totalGeneral)}`, col[3], y+10, { width: col[4]-col[3], align:'right' });
     }
 
     y += 32;
