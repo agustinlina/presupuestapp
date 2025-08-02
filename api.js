@@ -149,6 +149,13 @@ module.exports = async (req, res) => {
     const leyendaTotal = ivaIncluido ? 'Total (IVA Incluido):' : 'Total:';
     doc.text(leyendaTotal, col[2], y+10, { width: col[3]-col[2], align:'right' });
     doc.text(`$${formatMonto(totalGeneral)}`, col[3], y+10, { width: col[4]-col[3], align:'right' });
+
+    // "IVA incluido" más chico, solo si aplica
+    if (ivaIncluido) {
+      doc.font('Helvetica').fontSize(8).fillColor('#555')
+        .text('IVA incluido', col[3], y+27, { width: col[4]-col[3], align: 'right' });
+    }
+
     y += 32;
   } else {
     y += 12;
