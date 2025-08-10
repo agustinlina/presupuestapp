@@ -68,6 +68,12 @@
         <input style="width: 36px;" id="ivaIncluido" type="checkbox" name="ivaIncluido" checked>
       </div>
 
+      <div style="display: flex;align-items:center; gap:10px; margin-top:8px;">
+        <label for="quitarIva" style="margin: 0;">Quitar IVA del total (21%)</label>
+        <input style="width: 36px;" id="quitarIva" type="checkbox" name="quitarIva">
+      </div>
+
+
       <label>Condiciones de venta:</label>
       <input name="condiciones" required value="Contado" placeholder="Contado, 30 días, etc.">
 
@@ -110,6 +116,8 @@
     const totalGeneral = document.getElementById('totalGeneral');
     const inputFecha = document.querySelector('input[name="fechaEmision"]');
     const ocultarTotal = document.getElementById('ocultarTotal');
+    const quitarIvaEl = document.getElementById('quitarIva'); // ✅ NUEVO
+    const IVA_RATE = 0.21; // ✅ 21%
 
     // Setea la fecha por defecto al día de hoy si está vacío
     if (inputFecha && !inputFecha.value) {
@@ -123,13 +131,13 @@
     function crearFila(datos = {}) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><input type="number" name="cantidad" min="1" value="${datos.cantidad !== undefined ? datos.cantidad : 1}" required></td>
-        <td><input type="text" name="descripcion" value="${datos.descripcion !== undefined ? datos.descripcion : 'Producto genérico'}" required></td>
-        <td><input type="number" name="precio" min="0" step="0.01" value="${datos.precio !== undefined ? datos.precio : 100}" required></td>
-        <td><input type="number" name="descuento" min="0" max="100" step="0.01" value="${datos.descuento !== undefined ? datos.descuento : 0}" style="width:85px;" required></td>
-        <td class="total-fila">$0,00</td>
-        <td><button type="button" class="del-btn" title="Quitar fila">&times;</button></td>
-      `;
+      <td><input type="number" name="cantidad" min="1" value="${datos.cantidad !== undefined ? datos.cantidad : 1}" required></td>
+      <td><input type="text" name="descripcion" value="${datos.descripcion !== undefined ? datos.descripcion : 'Producto genérico'}" required></td>
+      <td><input type="number" name="precio" min="0" step="0.01" value="${datos.precio !== undefined ? datos.precio : 100}" required></td>
+      <td><input type="number" name="descuento" min="0" max="100" step="0.01" value="${datos.descuento !== undefined ? datos.descuento : 0}" style="width:85px;" required></td>
+      <td class="total-fila">$0,00</td>
+      <td><button type="button" class="del-btn" title="Quitar fila">&times;</button></td>
+    `;
       tbody.appendChild(tr);
       tr.querySelector('.del-btn').onclick = () => {
         tr.remove();
@@ -158,17 +166,30 @@
 
     function calcularTotales() {
       let total = 0;
+      const quitarIva = quitarIvaEl && quitarIvaEl.checked; // ✅
       tbody.querySelectorAll('tr').forEach(tr => {
         const cantidad = parseFloat(tr.querySelector('[name="cantidad"]').value) || 0;
         const precio = parseFloat(tr.querySelector('[name="precio"]').value) || 0;
         const descuento = parseFloat(tr.querySelector('[name="descuento"]').value) || 0;
-        const subtotal = cantidad * precio * (1 - descuento / 100);
+
+        // Precio unitario con descuento
+        let unit = precio * (1 - descuento / 100);
+
+        // ✅ Si se quita IVA, pasamos a precio neto
+        if (quitarIva) {
+          unit = unit / (1 + IVA_RATE);
+        }
+
+        const subtotal = cantidad * unit;
+
         tr.querySelector('.total-fila').textContent = subtotal ? `$${formatMonto(subtotal)}` : '$0,00';
         total += subtotal;
       });
       totalGeneral.textContent = formatMonto(total);
     }
+
     tbody.addEventListener('input', calcularTotales);
+    if (quitarIvaEl) quitarIvaEl.addEventListener('change', calcularTotales); // ✅ recalcular al tildar/destildar
 
     // Ocultar columna Total
     function actualizarColumnaTotal() {
@@ -192,20 +213,35 @@
       e.preventDefault();
       const form = e.target;
       const productos = [];
+      const quitarIva = quitarIvaEl && quitarIvaEl.checked; // ✅
+
       tbody.querySelectorAll('tr').forEach(tr => {
         const cantidad = tr.querySelector('[name="cantidad"]').value;
         const descripcion = tr.querySelector('[name="descripcion"]').value;
-        const precio = tr.querySelector('[name="precio"]').value;
-        const descuento = tr.querySelector('[name="descuento"]').value;
-        if (cantidad && descripcion && precio) {
+        const precioStr = tr.querySelector('[name="precio"]').value;
+        const descuentoStr = tr.querySelector('[name="descuento"]').value;
+
+        if (cantidad && descripcion && precioStr) {
+          const precio = parseFloat(precioStr);
+          const descuento = parseFloat(descuentoStr) || 0;
+
+          // ✅ Precio que enviaremos: si “quitar IVA” está activo, mandamos precio neto (sin IVA)
+          const precioConDesc = precio * (1 - descuento / 100);
+          const precioAEnviar = quitarIva ? (precioConDesc / (1 + IVA_RATE)) : precioConDesc;
+
           productos.push({
             cantidad: parseInt(cantidad),
             descripcion,
-            precio: parseFloat(precio),
-            descuento: parseFloat(descuento) || 0
+            // OJO: el servidor ya aplica descuento en su lógica actual.
+            // Para no duplicar descuentos en servidor, le enviamos el precio base
+            // pero aquí preferimos que el PDF refleje el neto cuando “quitar IVA” está activo.
+            // Entonces enviamos precio unitario ya con descuento aplicado si querés efecto 1:1:
+            precio: precioAEnviar,
+            descuento: 0 // evitamos doble descuento en servidor
           });
         }
       });
+
       if (productos.length < 1) {
         alert('Agregue al menos un producto');
         return;
@@ -222,20 +258,23 @@
         nombreCliente: form.nombreCliente.value,
         cuitCliente: form.cuitCliente.value,
         condiciones: form.condiciones.value,
-        observaciones: form.observaciones.value,
+        observaciones: form.observaciones ? form.observaciones.value : '',
         ivaIncluido: form.ivaIncluido.checked,
         fechaEmision,
         ocultarTotal: ocultarTotal.checked,
-        productos
+        productos,
+        // ✅ Enviamos también el flag, aunque el server no lo use; no rompe nada.
+        quitarIva: quitarIva
       };
+
       const res = await fetch('/api', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datos)
       });
+
       if (res.ok) {
         const blob = await res.blob();
-        // Extraer nombre del archivo de Content-Disposition si lo deseas:
         const disposition = res.headers.get('Content-Disposition');
         let fileName = "presupuesto.pdf";
         if (disposition && disposition.includes("filename=")) {
@@ -251,9 +290,11 @@
         alert('Error generando el PDF');
       }
     };
+
     calcularTotales();
     actualizarColumnaTotal();
   </script>
+
 </body>
 
 </html>
