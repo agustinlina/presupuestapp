@@ -1,38 +1,26 @@
+/* Dark & Minimalist CSS para stock.html */
 :root {
-  --bg: #16245a;
-  --bg_light: #233475;
-  --border: #333;
-  --accent: #e9c500;
-  --card: #222;
-  --table-head: #1a1a1a;
+  --text: rgb(225, 233, 242);
+  --background: rgb(10, 19, 28);
+  --primary: rgb(143, 185, 226);
+  --secondary: rgb(24, 77, 129);
+  --accent: rgb(60, 146, 231);
+  --card: hsl(210, 59%, 72%, 5%);
+  --accent_selected: rgb(100, 146, 231);
 }
+
 body {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.4'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: auto;
-  background-attachment: fixed;
+  background-color: var(--background) !important;
   font-family: system-ui, sans-serif;
   margin: 0;
   min-height: 100vh;
   padding: 0;
-  background-color: var(--bg) !important;
-}
-
-.navbar,
-.offcanvas-body,
-.offcanvas-header {
-  background-color: var(--bg_light) !important;
-}
-
-.active {
-  color: var(--accent) !important;
 }
 
 .container {
   margin: 32px auto;
   padding: 16px 16px;
   border-radius: 16px;
-  background-color: var(--bg_light) !important;
   width: 100%;
   max-width: 80%;
   min-width: 0;
@@ -57,8 +45,9 @@ label {
 input,
 select,
 textarea {
-  color: var(--fg);
-  border: 1.6px solid var(--border);
+  color: var(--text);
+  background-color: var(--secondary);
+  border: none;
   border-radius: 7px;
   padding: 18px 22px;
   margin-bottom: 12px;
@@ -67,7 +56,6 @@ textarea {
   box-sizing: border-box;
   outline: none;
   transition: border 0.2s;
-  background-color: var(--bg) !important;
 }
 input:focus,
 textarea:focus {
@@ -117,7 +105,7 @@ th:last-child {
   font-size: 1.2rem;
 }
 .btn {
-  background: var(--bg);
+background-color: var(--accent)!important;
   padding: 18px;
   border-radius: 11px;
   font-size: 1.35rem;
@@ -126,7 +114,7 @@ th:last-child {
   margin: 16px 0 0 0;
   transition: background 0.18s, border 0.18s;
   display: block;
-  font-weight: bold!important;
+  font-weight: bold !important;
   letter-spacing: 1.5px;
 }
 .del-btn {
@@ -148,14 +136,13 @@ th:last-child {
   letter-spacing: 1px;
 }
 
-.btn_style{
-  background-color: var(--accent)!important;
-  color: var(--bg)!important;
+.btn_style {
+  color: var(--bg) !important;
 }
 
-.btn_style:hover{
-  background-color: #bca000!important;
+.btn_style:hover {
   transition: 100ms;
+  background-color: var(--accent_selected)!important;
 }
 /* Phone Friendly: ancho y tipografía grandes en móvil */
 
@@ -167,7 +154,6 @@ th:last-child {
   .container {
     display: none;
     margin: 0;
-    background: var(--card);
     padding: 32px 32px;
     border-radius: 16px;
     width: 100%;
@@ -195,7 +181,6 @@ th:last-child {
   textarea,
   select {
     font-size: 1.07rem !important;
-    padding: 13px 6px;
   }
   th,
   td {
